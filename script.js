@@ -15,6 +15,7 @@ const elements = {
   signOutBtn: document.getElementById('signOutBtn'),
   signInForm: document.getElementById('signInForm'),
   signUpForm: document.getElementById('signUpForm'),
+  needHelpBtn: document.getElementById('needHelpBtn'),
   authMessage: document.getElementById('authMessage'),
   quizCategory: document.getElementById('quizCategory'),
   quizDifficulty: document.getElementById('quizDifficulty'),
@@ -226,6 +227,10 @@ function handleSignIn(event) {
   });
 }
 
+function handleNeedHelp() {
+  showMessage('Need help? Use demo@terra.com / demo123 to test the app instantly, or create a new account below.');
+}
+
 function handleSignOut() {
   asyncJson('/api/logout', { method: 'POST' })
     .finally(() => {
@@ -418,6 +423,7 @@ function initialize() {
   });
 
   elements.signOutBtn.addEventListener('click', handleSignOut);
+  elements.needHelpBtn.addEventListener('click', handleNeedHelp);
   elements.signInForm.addEventListener('submit', handleSignIn);
   elements.signUpForm.addEventListener('submit', handleSignUp);
   elements.startQuizBtn.addEventListener('click', startQuiz);
