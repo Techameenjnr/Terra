@@ -16,6 +16,7 @@ const elements = {
   signInForm: document.getElementById('signInForm'),
   signUpForm: document.getElementById('signUpForm'),
   needHelpBtn: document.getElementById('needHelpBtn'),
+  needHelpPanel: document.getElementById('needHelpPanel'),
   authMessage: document.getElementById('authMessage'),
   quizCategory: document.getElementById('quizCategory'),
   quizDifficulty: document.getElementById('quizDifficulty'),
@@ -140,6 +141,7 @@ function setAuthTab(tab) {
 
   if (tab !== 'signIn') {
     elements.authMessage.textContent = '';
+    elements.needHelpPanel.classList.add('hidden');
   }
 }
 
@@ -228,7 +230,8 @@ function handleSignIn(event) {
 }
 
 function handleNeedHelp() {
-  showMessage('Need help? Use demo@terra.com / demo123 to test the app instantly, or create a new account below.');
+  const isVisible = !elements.needHelpPanel.classList.contains('hidden');
+  elements.needHelpPanel.classList.toggle('hidden', isVisible);
 }
 
 function handleSignOut() {

@@ -370,6 +370,42 @@ input:focus, select:focus {
   padding: 0;
 }
 
+.help-panel {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(63, 109, 93, 0.18);
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.help-label {
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary-strong);
+}
+
+.help-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(63, 109, 93, 0.12);
+  font-size: 0.92rem;
+}
+
+.help-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.help-row span {
+  color: var(--muted);
+}
+
 .form-note {
   margin: -8px 0 18px;
   color: var(--muted);
