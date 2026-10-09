@@ -1,7 +1,34 @@
 const STORAGE_KEYS = {
-  accounts: 'terraQuizAccounts',
-  leaderboard: 'terraQuizLeaderboard',
-  session: 'terraQuizSession'
+  accounts: 'terraQuizAccounts'
+};
+
+const pageRefs = {
+  welcome: document.getElementById('welcomePage'),
+  auth: document.getElementById('authPage'),
+  dashboard: document.getElementById('dashboardPage'),
+  quiz: document.getElementById('quizPage')
+};
+
+const elements = {
+  welcomeCreateBtn: document.getElementById('welcomeCreateBtn'),
+  welcomeSignInBtn: document.getElementById('welcomeSignInBtn'),
+  signOutBtn: document.getElementById('signOutBtn'),
+  signInForm: document.getElementById('signInForm'),
+  signUpForm: document.getElementById('signUpForm'),
+  authMessage: document.getElementById('authMessage'),
+  quizCategory: document.getElementById('quizCategory'),
+  quizDifficulty: document.getElementById('quizDifficulty'),
+  questionCount: document.getElementById('questionCount'),
+  startQuizBtn: document.getElementById('startQuizBtn'),
+  welcomeTitle: document.getElementById('welcomeTitle'),
+  leaderboardList: document.getElementById('leaderboardList'),
+  scoreValue: document.getElementById('scoreValue'),
+  progressBar: document.getElementById('progressBar'),
+  progressText: document.getElementById('progressText'),
+  questionText: document.getElementById('questionText'),
+  answerButtons: document.getElementById('answerButtons'),
+  quizCategoryTag: document.getElementById('quizCategoryTag'),
+  quizQuestionNumber: document.getElementById('quizQuestionNumber')
 };
 
 const questionBank = {
@@ -21,7 +48,7 @@ const questionBank = {
     { category: 'Python', question: 'Which collection keeps items in key-value pairs?', options: ['Tuple', 'List', 'Dictionary', 'Set'], answer: 'Dictionary', difficulty: 'easy' },
     { category: 'Python', question: 'Which method converts a string to lowercase?', options: ['lower()', 'small()', 'casefold()', 'trim()'], answer: 'lower()', difficulty: 'easy' },
     { category: 'Python', question: 'Which of these is a Python list?', options: ['{"a": 1}', '(1, 2, 3)', '[1, 2, 3]', '{1, 2, 3}'], answer: '[1, 2, 3]', difficulty: 'easy' },
-    { category: 'Python', question: 'What does the `==` operator check for?', options: ['Assignment', 'Comparison', 'Division', 'Concatenation'], answer: 'Comparison', difficulty: 'medium' },
+    { category: 'Python', question: 'What does the == operator check for?', options: ['Assignment', 'Comparison', 'Division', 'Concatenation'], answer: 'Comparison', difficulty: 'medium' },
     { category: 'Python', question: 'Which function is used to read input from a user?', options: ['print()', 'read()', 'input()', 'scan()'], answer: 'input()', difficulty: 'easy' },
     { category: 'Python', question: 'What is the purpose of a virtual environment?', options: ['To create a website', 'To isolate dependencies for a project', 'To compile code', 'To write documentation'], answer: 'To isolate dependencies for a project', difficulty: 'medium' },
     { category: 'Python', question: 'Which library is commonly used for data analysis?', options: ['pandas', 'torch', 'matplotlib', 'requests'], answer: 'pandas', difficulty: 'medium' },
@@ -71,79 +98,34 @@ const questionBank = {
 
 const state = {
   currentUser: null,
-  currentPage: 'welcome',
-  category: 'All',
-  difficulty: 'all',
-  questionCount: 5,
+  questions: [],
   score: 0,
   currentIndex: 0,
-  questions: [],
   answers: [],
-  leaderboard: JSON.parse(localStorage.getItem(STORAGE_KEYS.leaderboard) || '[]'),
-  authMessage: ''
+  category: 'All',
+  difficulty: 'all'
 };
 
-const pages = {
-  welcome: document.getElementById('welcomePage'),
-  auth: document.getElementById('authPage'),
-  dashboard: document.getElementById('dashboardPage'),
-  quiz: document.getElementById('quizPage')
-};
-
-const elements = {
-  welcomeCreateBtn: document.getElementById('welcomeCreateBtn'),
-  welcomeSignInBtn: document.getElementById('welcomeSignInBtn'),
-  signOutBtn: document.getElementById('signOutBtn'),
-  signInForm: document.getElementById('signInForm'),
-  signUpForm: document.getElementById('signUpForm'),
-  authMessage: document.getElementById('authMessage'),
-  quizCategory: document.getElementById('quizCategory'),
-  quizDifficulty: document.getElementById('quizDifficulty'),
-  questionCount: document.getElementById('questionCount'),
-  startQuizBtn: document.getElementById('startQuizBtn'),
-  welcomeTitle: document.getElementById('welcomeTitle'),
-  leaderboardList: document.getElementById('leaderboardList'),
-  scoreValue: document.getElementById('scoreValue'),
-  progressBar: document.getElementById('progressBar'),
-  progressText: document.getElementById('progressText'),
-  questionText: document.getElementById('questionText'),
-  answerButtons: document.getElementById('answerButtons'),
-  quizCategoryTag: document.getElementById('quizCategoryTag'),
-  quizQuestionNumber: document.getElementById('quizQuestionNumber')
-};
-
-function loadAccounts() {
-  const defaultAccounts = [{ name: 'Demo User', email: 'demo@terra.com', password: 'demo123' }];
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.accounts) || 'null');
-  if (!saved) {
-    localStorage.setItem(STORAGE_KEYS.accounts, JSON.stringify(defaultAccounts));
-    return defaultAccounts;
-  }
-  return saved;
-}
-
-function saveAccounts(accounts) {
-  localStorage.setItem(STORAGE_KEYS.accounts, JSON.stringify(accounts));
-}
-
-function setPage(pageName) {
-  Object.entries(pages).forEach(([key, node]) => {
-    node.classList.toggle('hidden', key !== pageName);
-    node.classList.toggle('active', key === pageName);
-  });
-  state.currentPage = pageName;
-}
-
-function setAuthTab(tabName) {
-  const tabs = document.querySelectorAll('.tab-btn');
-  tabs.forEach((tab) => tab.classList.toggle('active', tab.dataset.authTab === tabName));
-  document.getElementById('signInForm').classList.toggle('hidden', tabName !== 'signIn');
-  document.getElementById('signUpForm').classList.toggle('hidden', tabName !== 'signUp');
-}
-
-function showAuthMessage(message, isError = false) {
+function showMessage(message, isError = false) {
   elements.authMessage.textContent = message;
   elements.authMessage.style.color = isError ? '#bf4d4d' : '#2d5649';
+}
+
+function setPage(name) {
+  Object.entries(pageRefs).forEach(([key, node]) => {
+    node.classList.toggle('hidden', key !== name);
+  });
+}
+
+function setAuthTab(tab) {
+  const signInForm = document.getElementById('signInForm');
+  const signUpForm = document.getElementById('signUpForm');
+  const tabs = document.querySelectorAll('.tab-btn');
+  tabs.forEach((button) => {
+    button.classList.toggle('active', button.dataset.authTab === tab);
+  });
+  signInForm.classList.toggle('hidden', tab !== 'signIn');
+  signUpForm.classList.toggle('hidden', tab !== 'signUp');
 }
 
 function populateCategoryOptions() {
@@ -151,99 +133,96 @@ function populateCategoryOptions() {
   elements.quizCategory.innerHTML = categories.map((category) => `<option value="${category}">${category}</option>`).join('');
 }
 
-function getCurrentUser() {
-  const user = JSON.parse(localStorage.getItem(STORAGE_KEYS.session) || 'null');
-  return user;
+function asyncJson(url, options = {}) {
+  return fetch(url, {
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    ...options
+  }).then(async (response) => {
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.error || 'Request failed');
+    }
+    return payload;
+  });
 }
 
-function saveSession(user) {
-  localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(user));
+function refreshSession() {
+  return asyncJson('/api/session')
+    .then((payload) => {
+      state.currentUser = payload.user;
+      updateAuthUi();
+      if (payload.user) {
+        renderLeaderboard();
+      }
+      return payload.user;
+    })
+    .catch(() => {
+      state.currentUser = null;
+      updateAuthUi();
+    });
 }
 
-function updateSignedInUi() {
-  const user = getCurrentUser();
-  const signedIn = Boolean(user);
+function updateAuthUi() {
+  const signedIn = Boolean(state.currentUser);
   elements.signOutBtn.classList.toggle('hidden', !signedIn);
-  if (signedIn) {
-    elements.welcomeTitle.textContent = `Welcome, ${user.name}`;
+  if (state.currentUser) {
+    elements.welcomeTitle.textContent = `Welcome, ${state.currentUser.name}`;
   }
 }
 
 function handleSignUp(event) {
   event.preventDefault();
-  const name = document.getElementById('signUpName').value.trim();
-  const email = document.getElementById('signUpEmail').value.trim();
-  const password = document.getElementById('signUpPassword').value.trim();
+  const form = event.currentTarget;
+  const payload = {
+    name: form.querySelector('#signUpName').value.trim(),
+    email: form.querySelector('#signUpEmail').value.trim().toLowerCase(),
+    password: form.querySelector('#signUpPassword').value.trim()
+  };
 
-  if (!name || !email || !password) {
-    showAuthMessage('Please complete all fields.', true);
-    return;
-  }
-
-  const accounts = loadAccounts();
-  if (accounts.some((account) => account.email.toLowerCase() === email.toLowerCase())) {
-    showAuthMessage('An account already exists with that email.', true);
-    return;
-  }
-
-  const newAccount = { name, email, password };
-  accounts.push(newAccount);
-  saveAccounts(accounts);
-  state.currentUser = newAccount;
-  saveSession(newAccount);
-  updateSignedInUi();
-  showAuthMessage('Account created successfully.');
-  setTimeout(() => {
-    setPage('dashboard');
-  }, 500);
-  document.getElementById('signUpForm').reset();
+  asyncJson('/api/signup', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }).then(() => {
+    form.reset();
+    showMessage('Account created successfully.');
+    refreshSession().then(() => setPage('dashboard'));
+  }).catch((error) => {
+    showMessage(error.message, true);
+  });
 }
 
 function handleSignIn(event) {
   event.preventDefault();
-  const email = document.getElementById('signInEmail').value.trim();
-  const password = document.getElementById('signInPassword').value.trim();
+  const form = event.currentTarget;
+  const payload = {
+    email: form.querySelector('#signInEmail').value.trim().toLowerCase(),
+    password: form.querySelector('#signInPassword').value.trim()
+  };
 
-  const accounts = loadAccounts();
-  const account = accounts.find((item) => item.email.toLowerCase() === email.toLowerCase() && item.password === password);
-
-  if (!account) {
-    showAuthMessage('Invalid email or password.', true);
-    return;
-  }
-
-  state.currentUser = account;
-  saveSession(account);
-  updateSignedInUi();
-  showAuthMessage('Signed in successfully.');
-  setTimeout(() => {
-    setPage('dashboard');
-  }, 500);
-  document.getElementById('signInForm').reset();
-}
-
-function signOut() {
-  localStorage.removeItem(STORAGE_KEYS.session);
-  state.currentUser = null;
-  updateSignedInUi();
-  setPage('welcome');
-}
-
-function getQuestionPool() {
-  const selectedCategory = elements.quizCategory.value;
-  const allEntries = Object.values(questionBank).flat();
-  const filtered = selectedCategory === 'All'
-    ? allEntries
-    : allEntries.filter((item) => item.category === selectedCategory);
-
-  return filtered.filter((entry) => {
-    const difficulty = elements.quizDifficulty.value;
-    return difficulty === 'all' || entry.difficulty === difficulty;
+  asyncJson('/api/signin', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }).then(() => {
+    form.reset();
+    showMessage('Signed in successfully.');
+    refreshSession().then(() => setPage('dashboard'));
+  }).catch((error) => {
+    showMessage(error.message, true);
   });
 }
 
-function shuffle(array) {
-  const copy = [...array];
+function handleSignOut() {
+  asyncJson('/api/logout', { method: 'POST' })
+    .finally(() => {
+      state.currentUser = null;
+      updateAuthUi();
+      setPage('welcome');
+    });
+}
+
+function shuffle(items) {
+  const copy = [...items];
   for (let i = copy.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
@@ -252,27 +231,40 @@ function shuffle(array) {
 }
 
 function renderLeaderboard() {
-  const entries = JSON.parse(localStorage.getItem(STORAGE_KEYS.leaderboard) || '[]');
-  const top = [...entries].sort((a, b) => b.score - a.score).slice(0, 6);
+  asyncJson('/api/leaderboard')
+    .then((entries) => {
+      const topEntries = entries.slice(0, 6);
+      if (!topEntries.length) {
+        elements.leaderboardList.innerHTML = '<li class="leaderboard-item"><span class="leaderboard-rank">No scores yet</span><span class="leaderboard-score">—</span></li>';
+        return;
+      }
+      elements.leaderboardList.innerHTML = topEntries.map((entry, index) => `
+        <li class="leaderboard-item">
+          <span class="leaderboard-rank">#${index + 1} ${entry.name}</span>
+          <span class="leaderboard-score">${entry.score}/${entry.total}</span>
+        </li>
+      `).join('');
+    })
+    .catch(() => {
+      elements.leaderboardList.innerHTML = '<li class="leaderboard-item"><span class="leaderboard-rank">Leaderboard unavailable</span><span class="leaderboard-score">—</span></li>';
+    });
+}
 
-  if (!top.length) {
-    elements.leaderboardList.innerHTML = '<li class="leaderboard-item"><span class="leaderboard-rank">No scores yet</span><span class="leaderboard-score">—</span></li>';
-    return;
-  }
-
-  elements.leaderboardList.innerHTML = top.map((entry, index) => `
-    <li class="leaderboard-item">
-      <span class="leaderboard-rank">#${index + 1} ${entry.name}</span>
-      <span class="leaderboard-score">${entry.score}/${entry.total}</span>
-    </li>
-  `).join('');
+function buildQuestionPool() {
+  const selectedCategory = elements.quizCategory.value;
+  const selectedDifficulty = elements.quizDifficulty.value;
+  const allQuestions = Object.values(questionBank).flat();
+  return allQuestions.filter((question) => {
+    const matchesCategory = selectedCategory === 'All' || question.category === selectedCategory;
+    const matchesDifficulty = selectedDifficulty === 'all' || question.difficulty === selectedDifficulty;
+    return matchesCategory && matchesDifficulty;
+  });
 }
 
 function updateProgress() {
-  const current = state.currentIndex + 1;
   const total = state.questions.length || 1;
-  const progress = (current / total) * 100;
-  elements.progressBar.style.width = `${progress}%`;
+  const current = state.currentIndex + 1;
+  elements.progressBar.style.width = `${(current / total) * 100}%`;
   elements.progressText.textContent = `${current} / ${total}`;
   elements.scoreValue.textContent = state.score;
 }
@@ -283,12 +275,11 @@ function renderQuestion() {
     finishQuiz();
     return;
   }
-
   elements.quizCategoryTag.textContent = question.category;
   elements.quizQuestionNumber.textContent = `Question ${state.currentIndex + 1}`;
   elements.questionText.textContent = question.question;
-  elements.answerButtons.innerHTML = question.options.map((option, index) => `
-    <button class="answer-btn" data-choice="${index}" data-value="${option}">${option}</button>
+  elements.answerButtons.innerHTML = question.options.map((option) => `
+    <button class="answer-btn" data-answer="${option}">${option}</button>
   `).join('');
 
   elements.answerButtons.querySelectorAll('.answer-btn').forEach((button) => {
@@ -299,17 +290,16 @@ function renderQuestion() {
 }
 
 function handleAnswer(button, question) {
-  const selectedAnswer = button.dataset.value;
+  const selectedAnswer = button.dataset.answer;
   const isCorrect = selectedAnswer === question.answer;
 
   elements.answerButtons.querySelectorAll('.answer-btn').forEach((node) => {
-    const isChosen = node.dataset.value === selectedAnswer;
-    const isTrueAnswer = node.dataset.value === question.answer;
+    const value = node.dataset.answer;
     node.disabled = true;
-    if (isTrueAnswer) {
+    if (value === question.answer) {
       node.classList.add('correct');
     }
-    if (isChosen && !isCorrect) {
+    if (value === selectedAnswer && !isCorrect) {
       node.classList.add('incorrect');
     }
   });
@@ -332,7 +322,7 @@ function handleAnswer(button, question) {
     } else {
       finishQuiz();
     }
-  }, 700);
+  }, 650);
 
   updateProgress();
 }
@@ -342,56 +332,51 @@ function finishQuiz() {
   const accuracy = total ? Math.round((state.score / total) * 100) : 0;
   const playerName = state.currentUser?.name || 'Guest';
 
-  const leaderboardEntry = {
-    name: playerName,
-    score: state.score,
-    total,
-    accuracy
-  };
+  asyncJson('/api/leaderboard', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: playerName,
+      score: state.score,
+      total,
+      accuracy,
+      category: elements.quizCategory.value
+    })
+  }).finally(() => {
+    renderLeaderboard();
+  });
 
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.leaderboard) || '[]');
-  saved.push(leaderboardEntry);
-  localStorage.setItem(STORAGE_KEYS.leaderboard, JSON.stringify(saved));
-  renderLeaderboard();
-
+  elements.quizCategoryTag.textContent = 'Results';
+  elements.quizQuestionNumber.textContent = 'Summary';
+  elements.questionText.textContent = `${playerName}, your final score is ${state.score}/${total} (${accuracy}%).`;
   elements.answerButtons.innerHTML = state.answers.map((entry) => `
     <button class="answer-btn ${entry.isCorrect ? 'correct' : 'incorrect'}" disabled>
       ${entry.question} — ${entry.isCorrect ? 'Correct' : `Correct answer: ${entry.correct}`}
     </button>
   `).join('');
-
-  elements.questionText.textContent = `${playerName}, your final score is ${state.score}/${total} (${accuracy}%).`;
-  elements.quizCategoryTag.textContent = 'Results';
-  elements.quizQuestionNumber.textContent = 'Summary';
-  elements.progressText.textContent = `${total} / ${total}`;
   elements.progressBar.style.width = '100%';
+  elements.progressText.textContent = `${total} / ${total}`;
 
-  const replayButton = document.createElement('button');
-  replayButton.type = 'button';
-  replayButton.textContent = 'Play again';
-  replayButton.className = 'primary-btn full';
-  replayButton.addEventListener('click', () => {
-    setPage('dashboard');
-  });
-
-  const existing = elements.answerButtons.querySelector('.primary-btn');
-  if (existing) existing.remove();
-  elements.answerButtons.appendChild(replayButton);
+  const replay = document.createElement('button');
+  replay.type = 'button';
+  replay.textContent = 'Play again';
+  replay.className = 'primary-btn full';
+  replay.addEventListener('click', () => setPage('dashboard'));
+  elements.answerButtons.appendChild(replay);
 }
 
 function startQuiz() {
-  const pool = getQuestionPool();
-  const totalQuestions = Math.min(Math.max(Number(elements.questionCount.value) || 5, 1), 12);
-  const questions = shuffle(pool).slice(0, Math.min(totalQuestions, pool.length));
+  const pool = buildQuestionPool();
+  const requestedCount = Math.min(Math.max(Number(elements.questionCount.value) || 5, 1), 12);
+  const selectedQuestions = shuffle(pool).slice(0, Math.min(requestedCount, pool.length));
 
-  if (!questions.length) {
-    alert('There are no questions in that category and difficulty. Please choose another option.');
+  if (!selectedQuestions.length) {
+    alert('No questions match your selected filters. Please choose another combination.');
     return;
   }
 
-  state.questions = questions;
-  state.currentIndex = 0;
+  state.questions = selectedQuestions;
   state.score = 0;
+  state.currentIndex = 0;
   state.answers = [];
   setPage('quiz');
   renderQuestion();
@@ -400,16 +385,9 @@ function startQuiz() {
 function initialize() {
   populateCategoryOptions();
   renderLeaderboard();
-  updateSignedInUi();
-
-  const currentUser = getCurrentUser();
-  if (currentUser) {
-    state.currentUser = currentUser;
-    updateSignedInUi();
-    setPage('dashboard');
-  } else {
-    setPage('welcome');
-  }
+  setPage('welcome');
+  setAuthTab('signIn');
+  refreshSession();
 
   elements.welcomeCreateBtn.addEventListener('click', () => {
     setAuthTab('signUp');
@@ -421,11 +399,11 @@ function initialize() {
     setPage('auth');
   });
 
-  document.querySelectorAll('.tab-btn').forEach((tab) => {
-    tab.addEventListener('click', () => setAuthTab(tab.dataset.authTab));
+  document.querySelectorAll('.tab-btn').forEach((button) => {
+    button.addEventListener('click', () => setAuthTab(button.dataset.authTab));
   });
 
-  elements.signOutBtn.addEventListener('click', signOut);
+  elements.signOutBtn.addEventListener('click', handleSignOut);
   elements.signInForm.addEventListener('submit', handleSignIn);
   elements.signUpForm.addEventListener('submit', handleSignUp);
   elements.startQuizBtn.addEventListener('click', startQuiz);
