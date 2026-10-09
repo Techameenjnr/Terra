@@ -213,10 +213,75 @@ h3 {
   margin-top: 4px;
 }
 
+.auth-layout {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 22px;
+  align-items: stretch;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.auth-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 26px 24px;
+  background: linear-gradient(180deg, rgba(63, 109, 93, 0.96), rgba(45, 86, 73, 1));
+  color: #f5f7f3;
+}
+
+.auth-side .eyebrow,
+.auth-side h2,
+.auth-side .lead,
+.auth-side .feature-list {
+  color: #f5f7f3;
+}
+
+.auth-side h2 {
+  margin-bottom: 12px;
+  font-size: clamp(1.8rem, 2vw, 2.5rem);
+}
+
+.lead.compact {
+  margin-top: 0;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(245, 247, 243, 0.82);
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 22px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.feature-list li {
+  position: relative;
+  padding-left: 24px;
+  color: rgba(245, 247, 243, 0.9);
+}
+
+.feature-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(200, 157, 90, 0.18);
+}
+
 .auth-panel {
   max-width: 520px;
+  width: 100%;
   margin: 0 auto;
   padding: 24px;
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .auth-toggle {
@@ -273,6 +338,42 @@ input, select {
 input:focus, select:focus {
   border-color: rgba(63, 109, 93, 0.7);
   box-shadow: 0 0 0 4px rgba(63, 109, 93, 0.08);
+}
+
+.auth-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 2px 0 18px;
+}
+
+.checkbox-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.checkbox-wrap input {
+  width: 16px;
+  min-height: 16px;
+  accent-color: var(--primary);
+}
+
+.mini-link {
+  border: none;
+  background: transparent;
+  color: var(--primary-strong);
+  font-weight: 700;
+  padding: 0;
+}
+
+.form-note {
+  margin: -8px 0 18px;
+  color: var(--muted);
+  font-size: 0.86rem;
 }
 
 .full {
@@ -467,7 +568,8 @@ input:focus, select:focus {
 
 @media (max-width: 860px) {
   .hero-card,
-  .dashboard-grid {
+  .dashboard-grid,
+  .auth-layout {
     grid-template-columns: 1fr;
   }
 }

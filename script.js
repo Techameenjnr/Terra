@@ -121,11 +121,22 @@ function setAuthTab(tab) {
   const signInForm = document.getElementById('signInForm');
   const signUpForm = document.getElementById('signUpForm');
   const tabs = document.querySelectorAll('.tab-btn');
+
   tabs.forEach((button) => {
-    button.classList.toggle('active', button.dataset.authTab === tab);
+    const isActive = button.dataset.authTab === tab;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-selected', String(isActive));
   });
+
   signInForm.classList.toggle('hidden', tab !== 'signIn');
   signUpForm.classList.toggle('hidden', tab !== 'signUp');
+
+  signInForm.classList.toggle('active', tab === 'signIn');
+  signUpForm.classList.toggle('active', tab === 'signUp');
+
+  if (tab !== 'signIn') {
+    elements.authMessage.textContent = '';
+  }
 }
 
 function populateCategoryOptions() {
