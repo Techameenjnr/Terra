@@ -435,6 +435,37 @@ input:focus, select:focus {
   padding: 24px;
 }
 
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0 20px;
+}
+
+.stat-card {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.stat-card span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stat-card strong {
+  color: var(--primary-strong);
+  font-size: 1.3rem;
+}
+
 .split {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -487,7 +518,14 @@ input:focus, select:focus {
   margin-bottom: 16px;
 }
 
-.score-box {
+.quiz-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.score-box,
+.time-box {
   min-width: 94px;
   padding: 12px 14px;
   border-radius: 14px;
@@ -499,14 +537,16 @@ input:focus, select:focus {
   align-items: center;
 }
 
-.score-box span {
+.score-box span,
+.time-box span {
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.score-box strong {
+.score-box strong,
+.time-box strong {
   font-size: 1.7rem;
 }
 
@@ -624,7 +664,8 @@ input:focus, select:focus {
   }
 
   .split,
-  .hero-actions {
+  .hero-actions,
+  .stats-grid {
     grid-template-columns: 1fr;
     flex-direction: column;
   }

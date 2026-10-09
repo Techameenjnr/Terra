@@ -1,5 +1,6 @@
 const STORAGE_KEYS = {
-  accounts: 'terraQuizAccounts'
+  accounts: 'terraQuizAccounts',
+  stats: 'terraQuizStats'
 };
 
 const pageRefs = {
@@ -24,7 +25,11 @@ const elements = {
   startQuizBtn: document.getElementById('startQuizBtn'),
   welcomeTitle: document.getElementById('welcomeTitle'),
   leaderboardList: document.getElementById('leaderboardList'),
+  bestScoreStat: document.getElementById('bestScoreStat'),
+  bestStreakStat: document.getElementById('bestStreakStat'),
+  gamesStat: document.getElementById('gamesStat'),
   scoreValue: document.getElementById('scoreValue'),
+  timeValue: document.getElementById('timeValue'),
   progressBar: document.getElementById('progressBar'),
   progressText: document.getElementById('progressText'),
   questionText: document.getElementById('questionText'),
@@ -105,7 +110,13 @@ const state = {
   currentIndex: 0,
   answers: [],
   category: 'All',
-  difficulty: 'all'
+  difficulty: 'all',
+  timeLeft: 18,
+  timerId: null,
+  currentStreak: 0,
+  bestStreak: 0,
+  bestScore: 0,
+  totalGames: 0
 };
 
 function showMessage(message, isError = false) {
@@ -188,6 +199,29 @@ function updateAuthUi() {
   }
 }
 
+function loadStats() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.stats);
+    return raw ? JSON.parse(raw) : { bestScore: 0, bestStreak: 0, totalGames: 0 };
+  } catch (error) {
+    return { bestScore: 0, bestStreak: 0, totalGames: 0 };
+  }
+}
+
+function saveStats() {
+  localStorage.setItem(STORAGE_KEYS.stats, JSON.stringify({
+    bestScore: state.bestScore,
+    bestStreak: state.bestStreak,
+    totalGames: state.totalGames
+  }));
+}
+
+function updateDashboardStats() {
+  elements.bestScoreStat.textContent = String(state.bestScore);
+  elements.bestStreakStat.textContent = String(state.bestStreak);
+  elements.gamesStat.textContent = String(state.totalGames);
+}
+
 function handleSignUp(event) {
   event.preventDefault();
   const form = event.currentTarget;
@@ -241,6 +275,33 @@ function handleSignOut() {
       updateAuthUi();
       setPage('welcome');
     });
+}
+
+function clearQuestionTimer() {
+  if (state.timerId) {
+    clearInterval(state.timerId);
+    state.timerId = null;
+  }
+}
+
+function updateTimerDisplay() {
+  elements.timeValue.textContent = `${Math.max(0, state.timeLeft)}s`;
+}
+
+function startQuestionTimer(question) {
+  clearQuestionTimer();
+  state.timeLeft = 18;
+  updateTimerDisplay();
+
+  state.timerId = setInterval(() => {
+    state.timeLeft -= 1;
+    updateTimerDisplay();
+
+    if (state.timeLeft <= 0) {
+      clearQuestionTimer();
+      handleAnswer(null, question);
+    }
+  }, 1000);
 }
 
 function shuffle(items) {
@@ -308,12 +369,23 @@ function renderQuestion() {
     button.addEventListener('click', () => handleAnswer(button, question));
   });
 
+  startQuestionTimer(question);
   updateProgress();
 }
 
 function handleAnswer(button, question) {
-  const selectedAnswer = button.dataset.answer;
+  clearQuestionTimer();
+  const selectedAnswer = button ? button.dataset.answer : 'No answer';
   const isCorrect = selectedAnswer === question.answer;
+
+  if (isCorrect) {
+    state.currentStreak += 1;
+    state.score += 1;
+  } else {
+    state.currentStreak = 0;
+  }
+
+  state.bestStreak = Math.max(state.bestStreak, state.currentStreak);
 
   elements.answerButtons.querySelectorAll('.answer-btn').forEach((node) => {
     const value = node.dataset.answer;
@@ -325,10 +397,6 @@ function handleAnswer(button, question) {
       node.classList.add('incorrect');
     }
   });
-
-  if (isCorrect) {
-    state.score += 1;
-  }
 
   state.answers.push({
     question: question.question,
@@ -354,6 +422,11 @@ function finishQuiz() {
   const accuracy = total ? Math.round((state.score / total) * 100) : 0;
   const playerName = state.currentUser?.name || 'Guest';
 
+  state.bestScore = Math.max(state.bestScore, state.score);
+  state.totalGames += 1;
+  saveStats();
+  updateDashboardStats();
+
   asyncJson('/api/leaderboard', {
     method: 'POST',
     body: JSON.stringify({
@@ -369,7 +442,7 @@ function finishQuiz() {
 
   elements.quizCategoryTag.textContent = 'Results';
   elements.quizQuestionNumber.textContent = 'Summary';
-  elements.questionText.textContent = `${playerName}, your final score is ${state.score}/${total} (${accuracy}%).`;
+  elements.questionText.textContent = `${playerName}, your final score is ${state.score}/${total} (${accuracy}%). Streak: ${state.bestStreak}.`;
   elements.answerButtons.innerHTML = state.answers.map((entry) => `
     <button class="answer-btn ${entry.isCorrect ? 'correct' : 'incorrect'}" disabled>
       ${entry.question} — ${entry.isCorrect ? 'Correct' : `Correct answer: ${entry.correct}`}
@@ -396,15 +469,23 @@ function startQuiz() {
     return;
   }
 
+  clearQuestionTimer();
   state.questions = selectedQuestions;
   state.score = 0;
   state.currentIndex = 0;
   state.answers = [];
+  state.currentStreak = 0;
   setPage('quiz');
   renderQuestion();
 }
 
 function initialize() {
+  const savedStats = loadStats();
+  state.bestScore = savedStats.bestScore || 0;
+  state.bestStreak = savedStats.bestStreak || 0;
+  state.totalGames = savedStats.totalGames || 0;
+  updateDashboardStats();
+
   populateCategoryOptions();
   renderLeaderboard();
   setPage('welcome');
