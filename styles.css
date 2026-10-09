@@ -653,6 +653,37 @@ input:focus, select:focus {
   gap: 12px;
 }
 
+.result-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.result-pill {
+  background: linear-gradient(180deg, #ffffff 0%, #f4efe9 100%);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 10px;
+  text-align: center;
+}
+
+.result-pill span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.result-pill strong {
+  color: var(--primary-strong);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
 .answer-btn {
   width: 100%;
   min-height: 52px;
@@ -710,7 +741,8 @@ input:focus, select:focus {
 
   .split,
   .hero-actions,
-  .stats-grid {
+  .stats-grid,
+  .result-summary {
     grid-template-columns: 1fr;
     flex-direction: column;
   }

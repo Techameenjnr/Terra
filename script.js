@@ -442,12 +442,28 @@ function finishQuiz() {
 
   elements.quizCategoryTag.textContent = 'Results';
   elements.quizQuestionNumber.textContent = 'Summary';
-  elements.questionText.textContent = `${playerName}, your final score is ${state.score}/${total} (${accuracy}%). Streak: ${state.bestStreak}.`;
-  elements.answerButtons.innerHTML = state.answers.map((entry) => `
-    <button class="answer-btn ${entry.isCorrect ? 'correct' : 'incorrect'}" disabled>
-      ${entry.question} — ${entry.isCorrect ? 'Correct' : `Correct answer: ${entry.correct}`}
-    </button>
-  `).join('');
+  elements.questionText.textContent = `${playerName}, you finished the round.`;
+  elements.answerButtons.innerHTML = `
+    <div class="result-summary">
+      <div class="result-pill">
+        <span>Score</span>
+        <strong>${state.score}/${total}</strong>
+      </div>
+      <div class="result-pill">
+        <span>Accuracy</span>
+        <strong>${accuracy}%</strong>
+      </div>
+      <div class="result-pill">
+        <span>Best streak</span>
+        <strong>${state.bestStreak}</strong>
+      </div>
+    </div>
+    ${state.answers.map((entry) => `
+      <button class="answer-btn ${entry.isCorrect ? 'correct' : 'incorrect'}" disabled>
+        ${entry.question} — ${entry.isCorrect ? 'Correct' : `Correct answer: ${entry.correct}`}
+      </button>
+    `).join('')}
+  `;
   elements.progressBar.style.width = '100%';
   elements.progressText.textContent = `${total} / ${total}`;
 
