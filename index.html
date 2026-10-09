@@ -124,8 +124,13 @@
         <section id="dashboardPage" class="page hidden">
           <div class="dashboard-grid">
             <div class="panel setup-panel">
-              <p class="eyebrow subdued">Dashboard</p>
-              <h2 id="welcomeTitle">Welcome back</h2>
+              <div class="dashboard-header">
+                <div>
+                  <p class="eyebrow subdued">Dashboard</p>
+                  <h2 id="welcomeTitle">Welcome back</h2>
+                </div>
+                <span class="session-badge">Ready to play</span>
+              </div>
 
               <div class="stats-grid">
                 <div class="stat-card">
@@ -142,9 +147,11 @@
                 </div>
               </div>
 
-              <div class="field-group">
-                <label for="quizCategory">Category</label>
-                <select id="quizCategory"></select>
+              <div class="selector-card">
+                <div class="field-group">
+                  <label for="quizCategory">Category</label>
+                  <select id="quizCategory"></select>
+                </div>
               </div>
               <div class="field-group split">
                 <div>
