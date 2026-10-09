@@ -455,7 +455,16 @@ function finishQuiz() {
   replay.type = 'button';
   replay.textContent = 'Play again';
   replay.className = 'primary-btn full';
-  replay.addEventListener('click', () => setPage('dashboard'));
+  replay.addEventListener('click', () => {
+    setPage('dashboard');
+    clearQuestionTimer();
+    state.currentIndex = 0;
+    state.answers = [];
+    state.score = 0;
+    state.currentStreak = 0;
+    elements.scoreValue.textContent = '0';
+    elements.timeValue.textContent = '18s';
+  });
   elements.answerButtons.appendChild(replay);
 }
 
