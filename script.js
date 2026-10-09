@@ -131,6 +131,9 @@ function setAuthTab(tab) {
   signInForm.classList.toggle('hidden', tab !== 'signIn');
   signUpForm.classList.toggle('hidden', tab !== 'signUp');
 
+  signInForm.style.display = tab === 'signIn' ? 'block' : 'none';
+  signUpForm.style.display = tab === 'signUp' ? 'block' : 'none';
+
   signInForm.classList.toggle('active', tab === 'signIn');
   signUpForm.classList.toggle('active', tab === 'signUp');
 
