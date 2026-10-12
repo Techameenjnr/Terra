@@ -1,4 +1,5 @@
 import os
+import re
 import sqlite3
 from pathlib import Path
 
@@ -8,9 +9,10 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "trivia.db"
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 app = Flask(__name__, static_folder=".")
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or "dev-secret-key-change-me"
 
 
 def get_db_connection():
@@ -78,6 +80,11 @@ def script():
     return send_file(BASE_DIR / "script.js")
 
 
+@app.get("/api/health")
+def health_check():
+    return jsonify({"status": "ok", "service": "terra-trivia"})
+
+
 @app.get("/api/session")
 def get_session():
     user = session.get("user")
@@ -93,6 +100,12 @@ def signup():
 
     if not name or not email or not password:
         return jsonify({"error": "name, email, and password are required"}), 400
+
+    if not EMAIL_PATTERN.match(email):
+        return jsonify({"error": "Please enter a valid email address"}), 400
+
+    if len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters long"}), 400
 
     conn = get_db_connection()
     existing = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
@@ -121,6 +134,9 @@ def signin():
 
     if not email or not password:
         return jsonify({"error": "email and password are required"}), 400
+
+    if not EMAIL_PATTERN.match(email):
+        return jsonify({"error": "Please enter a valid email address"}), 400
 
     conn = get_db_connection()
     row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()

@@ -38,6 +38,7 @@ const elements = {
   quizQuestionNumber: document.getElementById('quizQuestionNumber')
 };
 
+
 const questionBank = {
   General: [
     { category: 'General', question: 'Which planet is known as the Red Planet?', options: ['Venus', 'Mars', 'Jupiter', 'Saturn'], answer: 'Mars', difficulty: 'easy' },
