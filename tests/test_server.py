@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -67,24 +68,73 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(signed_in.status_code, 200)
         self.assertEqual(self.client.get("/api/session").json["user"]["name"], "Quiz Player")
 
-    def test_leaderboard_requires_login_and_validates_scores(self):
-        score = {"score": 4, "total": 5, "accuracy": 80, "category": "Python"}
-        unauthorized = self.client.post("/api/leaderboard", json=score)
+    def test_quiz_answers_are_verified_and_scores_saved_server_side(self):
+        unauthorized = self.client.post(
+            "/api/quiz/start",
+            json={"category": "Python", "difficulty": "easy", "count": 1},
+        )
         self.assertEqual(unauthorized.status_code, 401)
 
         self.signup()
-        invalid_score = self.client.post(
-            "/api/leaderboard",
-            json={"score": 9, "total": 5, "accuracy": 180, "category": "Python"},
+        started = self.client.post(
+            "/api/quiz/start",
+            json={"category": "Python", "difficulty": "easy", "count": 1},
         )
-        self.assertEqual(invalid_score.status_code, 400)
+        self.assertEqual(started.status_code, 200)
+        self.assertNotIn("answer", started.json["questions"][0])
+        self.assertEqual(started.json["total"], 1)
 
-        saved = self.client.post("/api/leaderboard", json=score)
+        invalid_answer = self.client.post(
+            "/api/quiz/answer",
+            json={"question_index": 0, "answer": "not an option"},
+        )
+        self.assertEqual(invalid_answer.status_code, 400)
+
+        conn = server.get_db_connection()
+        attempt = conn.execute(
+            "SELECT questions_json FROM quiz_attempts WHERE id = ?",
+            (started.json["quiz_id"],),
+        ).fetchone()
+        answer = json.loads(attempt["questions_json"])[0]["answer"]
+        conn.close()
+
+        saved = self.client.post(
+            "/api/quiz/answer",
+            json={"question_index": 0, "answer": answer},
+        )
         self.assertEqual(saved.status_code, 200)
+        self.assertTrue(saved.json["finished"])
+        self.assertEqual(saved.json["summary"]["score"], 1)
+
         entry = self.client.get("/api/leaderboard").json[0]
         self.assertEqual(entry["name"], "Quiz Player")
-        self.assertEqual(entry["score"], 4)
+        self.assertEqual(entry["score"], 1)
         self.assertEqual(entry["category"], "Python")
+
+        forged_score = self.client.post(
+            "/api/leaderboard",
+            json={"name": "Cheater", "score": 999, "total": 1, "accuracy": 100},
+        )
+        self.assertIn(forged_score.status_code, (404, 405))
+
+    def test_quiz_requires_valid_filters_and_sequential_answers(self):
+        self.signup()
+        bad_difficulty = self.client.post(
+            "/api/quiz/start",
+            json={"category": "Python", "difficulty": ["easy"], "count": 2},
+        )
+        self.assertEqual(bad_difficulty.status_code, 400)
+
+        started = self.client.post(
+            "/api/quiz/start",
+            json={"category": "Python", "difficulty": "easy", "count": 2},
+        )
+        self.assertEqual(started.status_code, 200)
+        out_of_order = self.client.post(
+            "/api/quiz/answer",
+            json={"question_index": 1, "answer": started.json["questions"][1]["options"][0]},
+        )
+        self.assertEqual(out_of_order.status_code, 409)
 
     def test_non_object_json_is_rejected(self):
         response = self.client.post(

@@ -2,11 +2,17 @@ services:
   - type: web
     name: terra-trivia
     env: python
-    plan: free
+    plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn server:app --bind 0.0.0.0:$PORT
+    disk:
+      name: terra-trivia-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: APP_ENV
         value: production
       - key: SECRET_KEY
         generateValue: true
+      - key: DATABASE_PATH
+        value: /var/data/trivia.db

@@ -43,70 +43,7 @@ const elements = {
 };
 
 
-const questionBank = {
-  General: [
-    { category: 'General', question: 'Which planet is known as the Red Planet?', options: ['Venus', 'Mars', 'Jupiter', 'Saturn'], answer: 'Mars', difficulty: 'easy' },
-    { category: 'General', question: 'What is the capital city of Japan?', options: ['Kyoto', 'Tokyo', 'Osaka', 'Sapporo'], answer: 'Tokyo', difficulty: 'easy' },
-    { category: 'General', question: 'Who painted the Mona Lisa?', options: ['Vincent van Gogh', 'Leonardo da Vinci', 'Pablo Picasso', 'Claude Monet'], answer: 'Leonardo da Vinci', difficulty: 'easy' },
-    { category: 'General', question: 'What is the chemical symbol for gold?', options: ['Ag', 'Au', 'Go', 'Gd'], answer: 'Au', difficulty: 'easy' },
-    { category: 'General', question: 'Which ocean is the largest on Earth?', options: ['Atlantic Ocean', 'Indian Ocean', 'Pacific Ocean', 'Arctic Ocean'], answer: 'Pacific Ocean', difficulty: 'easy' },
-    { category: 'General', question: 'Which animal is the largest mammal on Earth?', options: ['Elephant', 'Blue whale', 'Giraffe', 'Hippopotamus'], answer: 'Blue whale', difficulty: 'easy' },
-    { category: 'General', question: 'Which language is used to style web pages?', options: ['HTML', 'CSS', 'Java', 'SQL'], answer: 'CSS', difficulty: 'easy' },
-    { category: 'General', question: 'Which year did the first moon landing happen?', options: ['1965', '1969', '1972', '1959'], answer: '1969', difficulty: 'medium' }
-  ],
-  Python: [
-    { category: 'Python', question: 'Which keyword defines a function in Python?', options: ['function', 'def', 'func', 'lambda'], answer: 'def', difficulty: 'easy' },
-    { category: 'Python', question: 'What is the output of len("terra")?', options: ['4', '5', '6', '3'], answer: '5', difficulty: 'easy' },
-    { category: 'Python', question: 'Which collection keeps items in key-value pairs?', options: ['Tuple', 'List', 'Dictionary', 'Set'], answer: 'Dictionary', difficulty: 'easy' },
-    { category: 'Python', question: 'Which method converts a string to lowercase?', options: ['lower()', 'small()', 'casefold()', 'trim()'], answer: 'lower()', difficulty: 'easy' },
-    { category: 'Python', question: 'Which of these is a Python list?', options: ['{"a": 1}', '(1, 2, 3)', '[1, 2, 3]', '{1, 2, 3}'], answer: '[1, 2, 3]', difficulty: 'easy' },
-    { category: 'Python', question: 'What does the == operator check for?', options: ['Assignment', 'Comparison', 'Division', 'Concatenation'], answer: 'Comparison', difficulty: 'medium' },
-    { category: 'Python', question: 'Which function is used to read input from a user?', options: ['print()', 'read()', 'input()', 'scan()'], answer: 'input()', difficulty: 'easy' },
-    { category: 'Python', question: 'What is the purpose of a virtual environment?', options: ['To create a website', 'To isolate dependencies for a project', 'To compile code', 'To write documentation'], answer: 'To isolate dependencies for a project', difficulty: 'medium' },
-    { category: 'Python', question: 'Which library is commonly used for data analysis?', options: ['pandas', 'torch', 'matplotlib', 'requests'], answer: 'pandas', difficulty: 'medium' },
-    { category: 'Python', question: 'Which statement is used for error handling?', options: ['loop', 'try', 'return', 'else'], answer: 'try', difficulty: 'medium' }
-  ],
-  Science: [
-    { category: 'Science', question: 'What is H2O commonly known as?', options: ['Salt', 'Water', 'Oxygen', 'Hydrogen'], answer: 'Water', difficulty: 'easy' },
-    { category: 'Science', question: 'Which part of the cell contains genetic material?', options: ['Membrane', 'Nucleus', 'Ribosome', 'Cytoplasm'], answer: 'Nucleus', difficulty: 'easy' },
-    { category: 'Science', question: 'What force keeps planets in orbit around the Sun?', options: ['Magnetism', 'Gravity', 'Friction', 'Electricity'], answer: 'Gravity', difficulty: 'easy' },
-    { category: 'Science', question: 'Which gas do plants absorb from the atmosphere?', options: ['Oxygen', 'Carbon dioxide', 'Helium', 'Nitrogen'], answer: 'Carbon dioxide', difficulty: 'easy' },
-    { category: 'Science', question: 'What is the boiling point of water at sea level?', options: ['90°C', '100°C', '110°C', '120°C'], answer: '100°C', difficulty: 'medium' },
-    { category: 'Science', question: 'Which blood type is considered a universal donor?', options: ['A+', 'O-', 'AB+', 'B-'], answer: 'O-', difficulty: 'medium' },
-    { category: 'Science', question: 'What is the hardest natural substance?', options: ['Gold', 'Diamond', 'Iron', 'Quartz'], answer: 'Diamond', difficulty: 'medium' },
-    { category: 'Science', question: 'Which organ pumps blood through the body?', options: ['Brain', 'Lungs', 'Liver', 'Heart'], answer: 'Heart', difficulty: 'easy' }
-  ],
-  Geography: [
-    { category: 'Geography', question: 'Which is the largest ocean on Earth?', options: ['Atlantic Ocean', 'Indian Ocean', 'Pacific Ocean', 'Arctic Ocean'], answer: 'Pacific Ocean', difficulty: 'easy' },
-    { category: 'Geography', question: 'Mount Everest is in which mountain range?', options: ['Andes', 'Himalayas', 'Rockies', 'Alps'], answer: 'Himalayas', difficulty: 'easy' },
-    { category: 'Geography', question: 'Which desert is the largest hot desert in the world?', options: ['Gobi', 'Kalahari', 'Sahara', 'Arabian'], answer: 'Sahara', difficulty: 'medium' },
-    { category: 'Geography', question: 'What is the capital of Canada?', options: ['Toronto', 'Vancouver', 'Ottawa', 'Montreal'], answer: 'Ottawa', difficulty: 'easy' },
-    { category: 'Geography', question: 'Which river runs through Egypt?', options: ['Amazon', 'Nile', 'Danube', 'Yangtze'], answer: 'Nile', difficulty: 'easy' },
-    { category: 'Geography', question: 'Which country has the most natural lakes?', options: ['Canada', 'Brazil', 'Russia', 'China'], answer: 'Canada', difficulty: 'easy' },
-    { category: 'Geography', question: 'The Great Barrier Reef is off the coast of which country?', options: ['Australia', 'Indonesia', 'Thailand', 'Fiji'], answer: 'Australia', difficulty: 'easy' },
-    { category: 'Geography', question: 'Which city is known as the City of Light?', options: ['Paris', 'Rome', 'Madrid', 'Berlin'], answer: 'Paris', difficulty: 'easy' }
-  ],
-  History: [
-    { category: 'History', question: 'Who was the first president of the United States?', options: ['Thomas Jefferson', 'John Adams', 'George Washington', 'Abraham Lincoln'], answer: 'George Washington', difficulty: 'easy' },
-    { category: 'History', question: 'Which civilization built the pyramids of Giza?', options: ['Romans', 'Egyptians', 'Greeks', 'Persians'], answer: 'Egyptians', difficulty: 'easy' },
-    { category: 'History', question: 'Who was known as the Iron Lady?', options: ['Angela Merkel', 'Margaret Thatcher', 'Queen Elizabeth II', 'Indira Gandhi'], answer: 'Margaret Thatcher', difficulty: 'medium' },
-    { category: 'History', question: 'Which event began in 1914?', options: ['World War I', 'World War II', 'Cold War', 'Industrial Revolution'], answer: 'World War I', difficulty: 'easy' },
-    { category: 'History', question: 'Who was assassinated on the Ides of March?', options: ['Augustus', 'Hadrian', 'Julius Caesar', 'Nero'], answer: 'Julius Caesar', difficulty: 'medium' },
-    { category: 'History', question: 'The Berlin Wall fell in which year?', options: ['1984', '1989', '1975', '1991'], answer: '1989', difficulty: 'medium' },
-    { category: 'History', question: 'Which empire ruled much of the Mediterranean world during the Roman era?', options: ['Ottoman Empire', 'Roman Empire', 'Byzantine Empire', 'Mongol Empire'], answer: 'Roman Empire', difficulty: 'easy' },
-    { category: 'History', question: 'Which ancient city was home to the Hanging Gardens?', options: ['Rome', 'Babylon', 'Athens', 'Cairo'], answer: 'Babylon', difficulty: 'medium' }
-  ],
-  Technology: [
-    { category: 'Technology', question: 'What does HTML stand for?', options: ['HighText Markup Language', 'HyperText Markup Language', 'HighText Machine Language', 'Home Tool Markup Language'], answer: 'HyperText Markup Language', difficulty: 'easy' },
-    { category: 'Technology', question: 'Which company created the iPhone?', options: ['Samsung', 'Microsoft', 'Apple', 'Google'], answer: 'Apple', difficulty: 'easy' },
-    { category: 'Technology', question: 'What does RAM stand for?', options: ['Read Access Memory', 'Random Access Memory', 'Rapid Access Module', 'Remote Access Machine'], answer: 'Random Access Memory', difficulty: 'easy' },
-    { category: 'Technology', question: 'Which protocol is used for secure web browsing?', options: ['HTTP', 'FTP', 'HTTPS', 'SMTP'], answer: 'HTTPS', difficulty: 'easy' },
-    { category: 'Technology', question: 'What is the main purpose of a firewall?', options: ['To format hard drives', 'To protect a network from unauthorized access', 'To speed up CPU', 'To increase RAM'], answer: 'To protect a network from unauthorized access', difficulty: 'medium' },
-    { category: 'Technology', question: 'Which data structure uses FIFO order?', options: ['Stack', 'Queue', 'Tree', 'HashMap'], answer: 'Queue', difficulty: 'medium' },
-    { category: 'Technology', question: 'What does VPN stand for?', options: ['Virtual Public Network', 'Very Private Network', 'Virtual Private Network', 'Visual Processing Network'], answer: 'Virtual Private Network', difficulty: 'medium' },
-    { category: 'Technology', question: 'Which database language is used to query tables?', options: ['HTML', 'SQL', 'JSON', 'XML'], answer: 'SQL', difficulty: 'easy' }
-  ]
-};
+const CATEGORIES = ['All', 'General', 'Python', 'Science', 'Geography', 'History', 'Technology'];
 
 const state = {
   currentUser: null,
@@ -162,8 +99,7 @@ function setAuthTab(tab) {
 }
 
 function populateCategoryOptions() {
-  const categories = ['All', ...Object.keys(questionBank)];
-  elements.quizCategory.innerHTML = categories.map((category) => `<option value="${category}">${category}</option>`).join('');
+  elements.quizCategory.innerHTML = CATEGORIES.map((category) => `<option value="${category}">${category}</option>`).join('');
 }
 
 function asyncJson(url, options = {}) {
@@ -329,15 +265,6 @@ function startQuestionTimer(question) {
   }, 1000);
 }
 
-function shuffle(items) {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
 function renderLeaderboard() {
   asyncJson('/api/leaderboard')
     .then((entries) => {
@@ -364,17 +291,6 @@ function renderLeaderboard() {
     });
 }
 
-function buildQuestionPool() {
-  const selectedCategory = elements.quizCategory.value;
-  const selectedDifficulty = elements.quizDifficulty.value;
-  const allQuestions = Object.values(questionBank).flat();
-  return allQuestions.filter((question) => {
-    const matchesCategory = selectedCategory === 'All' || question.category === selectedCategory;
-    const matchesDifficulty = selectedDifficulty === 'all' || question.difficulty === selectedDifficulty;
-    return matchesCategory && matchesDifficulty;
-  });
-}
-
 function updateProgress() {
   const total = state.questions.length || 1;
   const current = state.currentIndex + 1;
@@ -386,7 +302,6 @@ function updateProgress() {
 function renderQuestion() {
   const question = state.questions[state.currentIndex];
   if (!question) {
-    finishQuiz();
     return;
   }
   elements.quizCategoryTag.textContent = question.category;
@@ -406,82 +321,61 @@ function renderQuestion() {
 
 function handleAnswer(button, question) {
   clearQuestionTimer();
-  const selectedAnswer = button ? button.dataset.answer : 'No answer';
-  const isCorrect = selectedAnswer === question.answer;
-
-  if (isCorrect) {
-    state.currentStreak += 1;
-    state.score += 1;
-  } else {
-    state.currentStreak = 0;
-  }
-
-  state.bestStreak = Math.max(state.bestStreak, state.currentStreak);
-
+  const selectedAnswer = button ? button.dataset.answer : null;
   elements.answerButtons.querySelectorAll('.answer-btn').forEach((node) => {
-    const value = node.dataset.answer;
     node.disabled = true;
-    if (value === question.answer) {
-      node.classList.add('correct');
-    }
-    if (value === selectedAnswer && !isCorrect) {
-      node.classList.add('incorrect');
-    }
   });
 
-  state.answers.push({
-    question: question.question,
-    selected: selectedAnswer,
-    correct: question.answer,
-    isCorrect
-  });
+  asyncJson('/api/quiz/answer', {
+    method: 'POST',
+    body: JSON.stringify({
+      question_index: state.currentIndex,
+      answer: selectedAnswer
+    })
+  }).then((result) => {
+    state.score = result.score;
+    state.currentStreak = result.streak;
+    state.bestStreak = Math.max(state.bestStreak, result.streak);
+    state.answers.push(result.answer);
 
-  setTimeout(() => {
-    state.currentIndex += 1;
-    if (state.currentIndex < state.questions.length) {
+    elements.answerButtons.querySelectorAll('.answer-btn').forEach((node) => {
+      if (node.dataset.answer === result.correct_answer) {
+        node.classList.add('correct');
+      } else if (node.dataset.answer === selectedAnswer && !result.is_correct) {
+        node.classList.add('incorrect');
+      }
+    });
+    updateProgress();
+
+    setTimeout(() => {
+      if (result.finished) {
+        finishQuiz(result.summary);
+        return;
+      }
+      state.currentIndex += 1;
       renderQuestion();
-    } else {
-      finishQuiz();
-    }
-  }, 650);
-
-  updateProgress();
+    }, 650);
+  }).catch((error) => {
+    alert(error.message);
+    elements.answerButtons.querySelectorAll('.answer-btn').forEach((node) => {
+      node.disabled = false;
+    });
+    startQuestionTimer(question);
+  });
 }
 
-function finishQuiz() {
-  const total = state.questions.length;
-  const accuracy = total ? Math.round((state.score / total) * 100) : 0;
+function finishQuiz(summary) {
+  const { total, accuracy, answers } = summary;
   const playerName = state.currentUser?.name || 'Guest';
 
+  state.score = summary.score;
+  state.bestStreak = summary.best_streak;
+  state.answers = answers;
   state.bestScore = Math.max(state.bestScore, state.score);
   state.totalGames += 1;
   saveStats();
   updateDashboardStats();
-
-  asyncJson('/api/leaderboard', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: playerName,
-      score: state.score,
-      total,
-      accuracy,
-      category: elements.quizCategory.value
-    })
-  }).finally(() => {
-    renderLeaderboard();
-  }).then(() => {
-    const status = document.getElementById('resultStatus');
-    if (status) {
-      status.textContent = 'Your score has been added to the leaderboard.';
-      status.classList.remove('error');
-    }
-  }).catch(() => {
-    const status = document.getElementById('resultStatus');
-    if (status) {
-      status.textContent = 'Your round is complete, but the score could not be saved. Please sign in again and retry.';
-      status.classList.add('error');
-    }
-  });
+  renderLeaderboard();
 
   elements.quizCategoryTag.textContent = 'Results';
   elements.quizQuestionNumber.textContent = 'Summary';
@@ -501,7 +395,7 @@ function finishQuiz() {
         <strong>${state.bestStreak}</strong>
       </div>
     </div>
-    <p id="resultStatus" class="result-status" role="status">Saving your score…</p>
+    <p id="resultStatus" class="result-status" role="status">Your verified score has been added to the leaderboard.</p>
     ${state.answers.map((entry) => `
       <button class="answer-btn ${entry.isCorrect ? 'correct' : 'incorrect'}" disabled>
         ${entry.question} — ${entry.isCorrect ? 'Correct' : `Correct answer: ${entry.correct}`}
@@ -529,23 +423,30 @@ function finishQuiz() {
 }
 
 function startQuiz() {
-  const pool = buildQuestionPool();
   const requestedCount = Math.min(Math.max(Number(elements.questionCount.value) || 5, 1), 12);
-  const selectedQuestions = shuffle(pool).slice(0, Math.min(requestedCount, pool.length));
-
-  if (!selectedQuestions.length) {
-    alert('No questions match your selected filters. Please choose another combination.');
-    return;
-  }
-
-  clearQuestionTimer();
-  state.questions = selectedQuestions;
-  state.score = 0;
-  state.currentIndex = 0;
-  state.answers = [];
-  state.currentStreak = 0;
-  setPage('quiz');
-  renderQuestion();
+  elements.startQuizBtn.disabled = true;
+  asyncJson('/api/quiz/start', {
+    method: 'POST',
+    body: JSON.stringify({
+      category: elements.quizCategory.value,
+      difficulty: elements.quizDifficulty.value,
+      count: requestedCount
+    })
+  }).then((quiz) => {
+    clearQuestionTimer();
+    state.questions = quiz.questions;
+    state.score = 0;
+    state.currentIndex = 0;
+    state.answers = [];
+    state.currentStreak = 0;
+    state.bestStreak = 0;
+    setPage('quiz');
+    renderQuestion();
+  }).catch((error) => {
+    alert(error.message);
+  }).finally(() => {
+    elements.startQuizBtn.disabled = false;
+  });
 }
 
 function initialize() {

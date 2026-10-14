@@ -1,16 +1,18 @@
 import os
+import json
 import re
+import secrets
 import sqlite3
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_file, session
 from werkzeug.security import check_password_hash, generate_password_hash
+from questions import QUESTION_BANK, create_quiz
 
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("DATABASE_PATH", BASE_DIR / "trivia.db"))
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-QUESTION_CATEGORIES = {"General", "Python", "Science", "Geography", "History", "Technology"}
 IS_PRODUCTION = os.environ.get("APP_ENV") == "production"
 
 app = Flask(__name__, static_folder=".")
@@ -56,6 +58,23 @@ def init_db():
             total INTEGER NOT NULL,
             accuracy INTEGER NOT NULL,
             category TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS quiz_attempts (
+            id TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            category TEXT NOT NULL,
+            questions_json TEXT NOT NULL,
+            answers_json TEXT NOT NULL DEFAULT '[]',
+            current_index INTEGER NOT NULL DEFAULT 0,
+            score INTEGER NOT NULL DEFAULT 0,
+            current_streak INTEGER NOT NULL DEFAULT 0,
+            best_streak INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'active',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
@@ -206,6 +225,7 @@ def signin():
 @app.post("/api/logout")
 def logout():
     session.pop("user", None)
+    session.pop("active_quiz_id", None)
     return jsonify({"message": "Signed out"})
 
 
@@ -224,41 +244,162 @@ def leaderboard():
     return jsonify([dict(row) for row in rows])
 
 
-@app.post("/api/leaderboard")
-def save_leaderboard_entry():
+def public_question(question):
+    return {
+        "id": question["id"],
+        "category": question["category"],
+        "question": question["question"],
+        "options": question["options"],
+    }
+
+
+@app.post("/api/quiz/start")
+def start_quiz():
     user = session.get("user")
     if not user:
-        return jsonify({"error": "Sign in to save a score"}), 401
+        return jsonify({"error": "Sign in to start a quiz"}), 401
 
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         return jsonify({"error": "A JSON object is required"}), 400
 
-    score = data.get("score")
-    total = data.get("total")
-    accuracy = data.get("accuracy")
-    category = data.get("category")
-
-    if any(isinstance(value, bool) or not isinstance(value, int) for value in (score, total, accuracy)):
-        return jsonify({"error": "score, total, and accuracy must be integers"}), 400
-
-    if total < 1 or total > 12 or score < 0 or score > total:
-        return jsonify({"error": "Score must be within the selected quiz total"}), 400
-
-    if accuracy != round((score / total) * 100):
-        return jsonify({"error": "Accuracy does not match the score"}), 400
-
-    if not isinstance(category, str) or (category not in QUESTION_CATEGORIES and category != "All"):
+    category = data.get("category", "All")
+    difficulty = data.get("difficulty", "all")
+    count = data.get("count", 5)
+    if not isinstance(category, str) or (category != "All" and category not in QUESTION_BANK):
         return jsonify({"error": "Unknown quiz category"}), 400
+    if not isinstance(difficulty, str) or difficulty not in {"all", "easy", "medium"}:
+        return jsonify({"error": "Unknown difficulty"}), 400
+    if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 12:
+        return jsonify({"error": "Question count must be between 1 and 12"}), 400
 
+    questions = create_quiz(category, difficulty, count)
+    if not questions:
+        return jsonify({"error": "No questions match those filters"}), 400
+
+    quiz_id = secrets.token_urlsafe(24)
     conn = get_db_connection()
     conn.execute(
-        "INSERT INTO leaderboard (name, score, total, accuracy, category) VALUES (?, ?, ?, ?, ?)",
-        (user["name"], score, total, accuracy, category),
+        "UPDATE quiz_attempts SET status = 'abandoned' WHERE user_id = ? AND status = 'active'",
+        (user["id"],),
+    )
+    conn.execute(
+        "INSERT INTO quiz_attempts (id, user_id, category, questions_json) VALUES (?, ?, ?, ?)",
+        (quiz_id, user["id"], category, json.dumps(questions)),
     )
     conn.commit()
     conn.close()
-    return jsonify({"message": "Score saved"})
+
+    session["active_quiz_id"] = quiz_id
+    return jsonify({
+        "quiz_id": quiz_id,
+        "questions": [public_question(question) for question in questions],
+        "total": len(questions),
+    })
+
+
+@app.post("/api/quiz/answer")
+def answer_quiz_question():
+    user = session.get("user")
+    quiz_id = session.get("active_quiz_id")
+    if not user or not quiz_id:
+        return jsonify({"error": "No active quiz session"}), 401
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "A JSON object is required"}), 400
+
+    question_index = data.get("question_index")
+    selected_answer = data.get("answer")
+    if isinstance(question_index, bool) or not isinstance(question_index, int):
+        return jsonify({"error": "Question index must be an integer"}), 400
+    if selected_answer is not None and not isinstance(selected_answer, str):
+        return jsonify({"error": "Answer must be text or null"}), 400
+
+    conn = get_db_connection()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        attempt = conn.execute(
+            "SELECT * FROM quiz_attempts WHERE id = ? AND user_id = ?",
+            (quiz_id, user["id"]),
+        ).fetchone()
+        if attempt is None or attempt["status"] != "active":
+            conn.rollback()
+            return jsonify({"error": "Quiz session is not active"}), 409
+        if question_index != attempt["current_index"]:
+            conn.rollback()
+            return jsonify({"error": "Answer the current question before continuing"}), 409
+
+        questions = json.loads(attempt["questions_json"])
+        question = questions[question_index]
+        if selected_answer is not None and selected_answer not in question["options"]:
+            conn.rollback()
+            return jsonify({"error": "Answer is not one of the available options"}), 400
+
+        is_correct = selected_answer == question["answer"]
+        score = attempt["score"] + int(is_correct)
+        streak = attempt["current_streak"] + 1 if is_correct else 0
+        best_streak = max(attempt["best_streak"], streak)
+        answers = json.loads(attempt["answers_json"])
+        answers.append({
+            "question": question["question"],
+            "selected": selected_answer or "No answer",
+            "correct": question["answer"],
+            "isCorrect": is_correct,
+        })
+        next_index = question_index + 1
+        is_finished = next_index == len(questions)
+        conn.execute(
+            """
+            UPDATE quiz_attempts
+            SET answers_json = ?, current_index = ?, score = ?, current_streak = ?,
+                best_streak = ?, status = ?
+            WHERE id = ?
+            """,
+            (
+                json.dumps(answers),
+                next_index,
+                score,
+                streak,
+                best_streak,
+                "finished" if is_finished else "active",
+                quiz_id,
+            ),
+        )
+
+        response = {
+            "is_correct": is_correct,
+            "correct_answer": question["answer"],
+            "score": score,
+            "streak": streak,
+            "answer": answers[-1],
+            "finished": is_finished,
+        }
+        if is_finished:
+            total = len(questions)
+            accuracy = round(score / total * 100)
+            conn.execute(
+                "INSERT INTO leaderboard (name, score, total, accuracy, category) VALUES (?, ?, ?, ?, ?)",
+                (user["name"], score, total, accuracy, attempt["category"]),
+            )
+            response["summary"] = {
+                "score": score,
+                "total": total,
+                "accuracy": accuracy,
+                "best_streak": best_streak,
+                "answers": answers,
+            }
+            session.pop("active_quiz_id", None)
+        else:
+            response["next_question"] = public_question(questions[next_index])
+
+        conn.commit()
+        return jsonify(response)
+    except (sqlite3.Error, ValueError, KeyError, IndexError):
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":
