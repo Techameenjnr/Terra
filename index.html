@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trivia Quiz</title>
     <meta name="description" content="Trivia Quiz — a clean, modern quiz app with account sign-in, categories, and leaderboard." />
-    <link rel="stylesheet" href="styles.css?v=2" />
+    <link rel="stylesheet" href="styles.css?v=4" />
   </head>
   <body>
 
@@ -93,9 +93,11 @@
                 </div>
 
                 <div id="needHelpPanel" class="help-panel hidden" aria-live="polite">
-                  <p class="help-label">Demo access</p>
-                  <div class="help-row"><span>Email</span><strong>demo@terra.com</strong></div>
-                  <div class="help-row"><span>Password</span><strong>demo123</strong></div>
+                  <p id="helpPanelMessage" class="help-label">Loading help…</p>
+                  <div id="demoCredentials" class="hidden">
+                    <div class="help-row"><span>Email</span><strong id="demoEmail"></strong></div>
+                    <div class="help-row"><span>Password</span><strong id="demoPassword"></strong></div>
+                  </div>
                 </div>
 
                 <button type="submit" class="primary-btn full">Sign in</button>
@@ -112,9 +114,9 @@
                 </div>
                 <div class="field-group">
                   <label for="signUpPassword">Password</label>
-                  <input id="signUpPassword" type="password" placeholder="Create a password" required />
+                  <input id="signUpPassword" type="password" placeholder="Create a password" minlength="8" required />
                 </div>
-                <p class="form-note">Use at least 6 characters for a secure account.</p>
+                <p class="form-note">Use at least 8 characters for a secure account.</p>
                 <button type="submit" class="primary-btn full">Create account</button>
               </form>
               <p id="authMessage" class="auth-message"></p>
@@ -214,6 +216,6 @@
       </main>
     </div>
 
-    <script src="script.js?v=2"></script>
+    <script src="script.js?v=4"></script>
   </body>
 </html>

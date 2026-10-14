@@ -7,3 +7,6 @@ __pycache__/
 leaderboard.json
 .env
 .venv/
+*.db
+*.sqlite
+*.sqlite3

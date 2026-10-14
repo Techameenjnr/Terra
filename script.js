@@ -18,6 +18,10 @@ const elements = {
   signUpForm: document.getElementById('signUpForm'),
   needHelpBtn: document.getElementById('needHelpBtn'),
   needHelpPanel: document.getElementById('needHelpPanel'),
+  helpPanelMessage: document.getElementById('helpPanelMessage'),
+  demoCredentials: document.getElementById('demoCredentials'),
+  demoEmail: document.getElementById('demoEmail'),
+  demoPassword: document.getElementById('demoPassword'),
   authMessage: document.getElementById('authMessage'),
   quizCategory: document.getElementById('quizCategory'),
   quizDifficulty: document.getElementById('quizDifficulty'),
@@ -267,6 +271,26 @@ function handleSignIn(event) {
 function handleNeedHelp() {
   const isVisible = !elements.needHelpPanel.classList.contains('hidden');
   elements.needHelpPanel.classList.toggle('hidden', isVisible);
+  if (isVisible) {
+    return;
+  }
+
+  elements.helpPanelMessage.textContent = 'Loading help…';
+  elements.demoCredentials.classList.add('hidden');
+  asyncJson('/api/demo')
+    .then((info) => {
+      if (info.available) {
+        elements.helpPanelMessage.textContent = 'Demo account';
+        elements.demoEmail.textContent = info.email;
+        elements.demoPassword.textContent = info.password;
+        elements.demoCredentials.classList.remove('hidden');
+      } else {
+        elements.helpPanelMessage.textContent = 'Create an account to get started. For account recovery, contact the project team.';
+      }
+    })
+    .catch(() => {
+      elements.helpPanelMessage.textContent = 'Help is temporarily unavailable. Please try again.';
+    });
 }
 
 function handleSignOut() {
@@ -322,12 +346,18 @@ function renderLeaderboard() {
         elements.leaderboardList.innerHTML = '<li class="leaderboard-item"><span class="leaderboard-rank">No scores yet</span><span class="leaderboard-score">—</span></li>';
         return;
       }
-      elements.leaderboardList.innerHTML = topEntries.map((entry, index) => `
-        <li class="leaderboard-item">
-          <span class="leaderboard-rank">#${index + 1} ${entry.name}</span>
-          <span class="leaderboard-score">${entry.score}/${entry.total}</span>
-        </li>
-      `).join('');
+      elements.leaderboardList.replaceChildren(...topEntries.map((entry, index) => {
+        const item = document.createElement('li');
+        const rank = document.createElement('span');
+        const score = document.createElement('span');
+        item.className = 'leaderboard-item';
+        rank.className = 'leaderboard-rank';
+        score.className = 'leaderboard-score';
+        rank.textContent = `#${index + 1} ${entry.name}`;
+        score.textContent = `${entry.score}/${entry.total}`;
+        item.append(rank, score);
+        return item;
+      }));
     })
     .catch(() => {
       elements.leaderboardList.innerHTML = '<li class="leaderboard-item"><span class="leaderboard-rank">Leaderboard unavailable</span><span class="leaderboard-score">—</span></li>';
@@ -439,6 +469,18 @@ function finishQuiz() {
     })
   }).finally(() => {
     renderLeaderboard();
+  }).then(() => {
+    const status = document.getElementById('resultStatus');
+    if (status) {
+      status.textContent = 'Your score has been added to the leaderboard.';
+      status.classList.remove('error');
+    }
+  }).catch(() => {
+    const status = document.getElementById('resultStatus');
+    if (status) {
+      status.textContent = 'Your round is complete, but the score could not be saved. Please sign in again and retry.';
+      status.classList.add('error');
+    }
   });
 
   elements.quizCategoryTag.textContent = 'Results';
@@ -459,6 +501,7 @@ function finishQuiz() {
         <strong>${state.bestStreak}</strong>
       </div>
     </div>
+    <p id="resultStatus" class="result-status" role="status">Saving your score…</p>
     ${state.answers.map((entry) => `
       <button class="answer-btn ${entry.isCorrect ? 'correct' : 'incorrect'}" disabled>
         ${entry.question} — ${entry.isCorrect ? 'Correct' : `Correct answer: ${entry.correct}`}

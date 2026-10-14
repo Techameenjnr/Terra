@@ -684,6 +684,16 @@ input:focus, select:focus {
   font-weight: 800;
 }
 
+.result-status {
+  margin: -4px 0 16px;
+  color: var(--primary-strong);
+  font-size: 0.92rem;
+}
+
+.result-status.error {
+  color: var(--error);
+}
+
 .answer-btn {
   width: 100%;
   min-height: 52px;
