@@ -1,10 +1,12 @@
 import json
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 import server
+from questions import QUESTION_BANK
 
 
 class ServerTests(unittest.TestCase):
@@ -135,6 +137,57 @@ class ServerTests(unittest.TestCase):
             json={"question_index": 1, "answer": started.json["questions"][1]["options"][0]},
         )
         self.assertEqual(out_of_order.status_code, 409)
+
+    def test_start_quiz_for_every_category_and_difficulty(self):
+        self.signup()
+        for category in ["All", *QUESTION_BANK]:
+            for difficulty in ("all", "easy", "medium"):
+                with self.subTest(category=category, difficulty=difficulty):
+                    response = self.client.post(
+                        "/api/quiz/start",
+                        json={"category": category, "difficulty": difficulty, "count": 12},
+                    )
+                    self.assertEqual(response.status_code, 200)
+                    self.assertGreater(response.json["total"], 0)
+                    self.assertLessEqual(response.json["total"], 12)
+                    for question in response.json["questions"]:
+                        self.assertNotIn("answer", question)
+                        self.assertIn(question["category"], QUESTION_BANK)
+                        if category != "All":
+                            self.assertEqual(question["category"], category)
+
+    def test_quiz_answer_after_server_deadline_is_not_counted(self):
+        self.signup()
+        started = self.client.post(
+            "/api/quiz/start",
+            json={"category": "Python", "difficulty": "easy", "count": 1},
+        )
+        conn = server.get_db_connection()
+        attempt = conn.execute(
+            "SELECT questions_json FROM quiz_attempts WHERE id = ?",
+            (started.json["quiz_id"],),
+        ).fetchone()
+        answer = json.loads(attempt["questions_json"])[0]["answer"]
+        conn.execute(
+            "UPDATE quiz_attempts SET question_started_at = ? WHERE id = ?",
+            (time.time() - 21, started.json["quiz_id"]),
+        )
+        conn.commit()
+        conn.close()
+
+        response = self.client.post(
+            "/api/quiz/answer",
+            json={"question_index": 0, "answer": answer},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["timed_out"])
+        self.assertFalse(response.json["is_correct"])
+        self.assertEqual(response.json["summary"]["score"], 0)
+
+    def test_accuracy_rounds_half_percent_up(self):
+        self.assertEqual(server.calculate_accuracy(1, 8), 13)
+        self.assertEqual(server.calculate_accuracy(0, 8), 0)
+        self.assertEqual(server.calculate_accuracy(8, 8), 100)
 
     def test_non_object_json_is_rejected(self):
         response = self.client.post(

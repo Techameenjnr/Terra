@@ -56,6 +56,7 @@ const state = {
   timeLeft: 18,
   timerId: null,
   currentStreak: 0,
+  roundBestStreak: 0,
   bestStreak: 0,
   bestScore: 0,
   totalGames: 0
@@ -122,13 +123,18 @@ function refreshSession() {
       state.currentUser = payload.user;
       updateAuthUi();
       if (payload.user) {
+        setPage('dashboard');
         renderLeaderboard();
       }
       return payload.user;
     })
-    .catch(() => {
+    .catch((error) => {
       state.currentUser = null;
       updateAuthUi();
+      setAuthTab('signIn');
+      showMessage(`Unable to verify your sign-in status: ${error.message}`, true);
+      setPage('auth');
+      return null;
     });
 }
 
@@ -178,7 +184,9 @@ function handleSignUp(event) {
   }).then(() => {
     form.reset();
     showMessage('Account created successfully.');
-    refreshSession().then(() => setPage('dashboard'));
+    refreshSession().then((user) => {
+      if (user) setPage('dashboard');
+    });
   }).catch((error) => {
     showMessage(error.message, true);
   });
@@ -198,7 +206,9 @@ function handleSignIn(event) {
   }).then(() => {
     form.reset();
     showMessage('Signed in successfully.');
-    refreshSession().then(() => setPage('dashboard'));
+    refreshSession().then((user) => {
+      if (user) setPage('dashboard');
+    });
   }).catch((error) => {
     showMessage(error.message, true);
   });
@@ -231,10 +241,15 @@ function handleNeedHelp() {
 
 function handleSignOut() {
   asyncJson('/api/logout', { method: 'POST' })
-    .finally(() => {
+    .then(() => {
       state.currentUser = null;
       updateAuthUi();
       setPage('welcome');
+    })
+    .catch((error) => {
+      setAuthTab('signIn');
+      showMessage(`Could not sign out: ${error.message}`, true);
+      setPage('auth');
     });
 }
 
@@ -307,13 +322,16 @@ function renderQuestion() {
   elements.quizCategoryTag.textContent = question.category;
   elements.quizQuestionNumber.textContent = `Question ${state.currentIndex + 1}`;
   elements.questionText.textContent = question.question;
-  elements.answerButtons.innerHTML = question.options.map((option) => `
-    <button class="answer-btn" data-answer="${option}">${option}</button>
-  `).join('');
-
-  elements.answerButtons.querySelectorAll('.answer-btn').forEach((button) => {
+  const buttons = question.options.map((option) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'answer-btn';
+    button.dataset.answer = option;
+    button.textContent = option;
     button.addEventListener('click', () => handleAnswer(button, question));
+    return button;
   });
+  elements.answerButtons.replaceChildren(...buttons);
 
   startQuestionTimer(question);
   updateProgress();
@@ -335,7 +353,7 @@ function handleAnswer(button, question) {
   }).then((result) => {
     state.score = result.score;
     state.currentStreak = result.streak;
-    state.bestStreak = Math.max(state.bestStreak, result.streak);
+    state.roundBestStreak = Math.max(state.roundBestStreak, result.streak);
     state.answers.push(result.answer);
 
     elements.answerButtons.querySelectorAll('.answer-btn').forEach((node) => {
@@ -369,7 +387,8 @@ function finishQuiz(summary) {
   const playerName = state.currentUser?.name || 'Guest';
 
   state.score = summary.score;
-  state.bestStreak = summary.best_streak;
+  state.roundBestStreak = summary.best_streak;
+  state.bestStreak = Math.max(state.bestStreak, summary.best_streak);
   state.answers = answers;
   state.bestScore = Math.max(state.bestScore, state.score);
   state.totalGames += 1;
@@ -380,46 +399,76 @@ function finishQuiz(summary) {
   elements.quizCategoryTag.textContent = 'Results';
   elements.quizQuestionNumber.textContent = 'Summary';
   elements.questionText.textContent = `${playerName}, you finished the round.`;
-  elements.answerButtons.innerHTML = `
-    <div class="result-summary">
-      <div class="result-pill">
-        <span>Score</span>
-        <strong>${state.score}/${total}</strong>
-      </div>
-      <div class="result-pill">
-        <span>Accuracy</span>
-        <strong>${accuracy}%</strong>
-      </div>
-      <div class="result-pill">
-        <span>Best streak</span>
-        <strong>${state.bestStreak}</strong>
-      </div>
-    </div>
-    <p id="resultStatus" class="result-status" role="status">Your verified score has been added to the leaderboard.</p>
-    ${state.answers.map((entry) => `
-      <button class="answer-btn ${entry.isCorrect ? 'correct' : 'incorrect'}" disabled>
-        ${entry.question} — ${entry.isCorrect ? 'Correct' : `Correct answer: ${entry.correct}`}
-      </button>
-    `).join('')}
-  `;
+  const resultSummary = document.createElement('div');
+  resultSummary.className = 'result-summary';
+  [
+    ['Score', `${state.score}/${total}`],
+    ['Accuracy', `${accuracy}%`],
+    ['Best streak', String(state.roundBestStreak)]
+  ].forEach(([label, value]) => {
+    const pill = document.createElement('div');
+    const title = document.createElement('span');
+    const result = document.createElement('strong');
+    pill.className = 'result-pill';
+    title.textContent = label;
+    result.textContent = value;
+    pill.append(title, result);
+    resultSummary.appendChild(pill);
+  });
+
+  const resultStatus = document.createElement('p');
+  resultStatus.id = 'resultStatus';
+  resultStatus.className = 'result-status';
+  resultStatus.setAttribute('role', 'status');
+  resultStatus.textContent = 'Your verified score has been added to the leaderboard.';
+
+  const answerReview = state.answers.map((entry) => {
+    const button = document.createElement('button');
+    button.className = `answer-btn ${entry.isCorrect ? 'correct' : 'incorrect'}`;
+    button.disabled = true;
+    button.textContent = `${entry.question} — ${entry.isCorrect ? 'Correct' : `Correct answer: ${entry.correct}`}`;
+    return button;
+  });
+  elements.answerButtons.replaceChildren(resultSummary, resultStatus, ...answerReview);
   elements.progressBar.style.width = '100%';
   elements.progressText.textContent = `${total} / ${total}`;
 
-  const replay = document.createElement('button');
-  replay.type = 'button';
-  replay.textContent = 'Play again';
-  replay.className = 'primary-btn full';
-  replay.addEventListener('click', () => {
-    setPage('dashboard');
-    clearQuestionTimer();
-    state.currentIndex = 0;
-    state.answers = [];
-    state.score = 0;
-    state.currentStreak = 0;
-    elements.scoreValue.textContent = '0';
-    elements.timeValue.textContent = '18s';
-  });
-  elements.answerButtons.appendChild(replay);
+  const actions = document.createElement('div');
+  actions.className = 'result-actions';
+
+  const goBack = document.createElement('button');
+  goBack.type = 'button';
+  goBack.textContent = 'Go back';
+  goBack.className = 'secondary-btn full';
+  goBack.addEventListener('click', () => returnToQuizSetup(false));
+
+  const playAgain = document.createElement('button');
+  playAgain.type = 'button';
+  playAgain.textContent = 'Play again';
+  playAgain.className = 'primary-btn full';
+  playAgain.addEventListener('click', () => returnToQuizSetup(true));
+
+  actions.append(goBack, playAgain);
+  elements.answerButtons.appendChild(actions);
+}
+
+function returnToQuizSetup(resetOptions) {
+  clearQuestionTimer();
+  state.questions = [];
+  state.currentIndex = 0;
+  state.answers = [];
+  state.score = 0;
+  state.currentStreak = 0;
+  elements.scoreValue.textContent = '0';
+  elements.timeValue.textContent = '18s';
+
+  if (resetOptions) {
+    elements.quizCategory.value = 'All';
+    elements.quizDifficulty.value = 'all';
+    elements.questionCount.value = '5';
+  }
+
+  setPage('dashboard');
 }
 
 function startQuiz() {
@@ -439,7 +488,7 @@ function startQuiz() {
     state.currentIndex = 0;
     state.answers = [];
     state.currentStreak = 0;
-    state.bestStreak = 0;
+    state.roundBestStreak = 0;
     setPage('quiz');
     renderQuestion();
   }).catch((error) => {

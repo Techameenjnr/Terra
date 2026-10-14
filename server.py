@@ -3,6 +3,7 @@ import json
 import re
 import secrets
 import sqlite3
+import time
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_file, session
@@ -32,6 +33,7 @@ app.config.update(
 def get_db_connection():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -74,11 +76,19 @@ def init_db():
             score INTEGER NOT NULL DEFAULT 0,
             current_streak INTEGER NOT NULL DEFAULT 0,
             best_streak INTEGER NOT NULL DEFAULT 0,
+            question_started_at REAL NOT NULL DEFAULT 0,
             status TEXT NOT NULL DEFAULT 'active',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
     )
+    attempt_columns = {
+        row["name"] for row in conn.execute("PRAGMA table_info(quiz_attempts)")
+    }
+    if "question_started_at" not in attempt_columns:
+        conn.execute(
+            "ALTER TABLE quiz_attempts ADD COLUMN question_started_at REAL NOT NULL DEFAULT 0"
+        )
 
     if not IS_PRODUCTION:
         demo_user = conn.execute(
@@ -236,7 +246,7 @@ def leaderboard():
         """
         SELECT name, score, total, accuracy, category
         FROM leaderboard
-        ORDER BY score DESC, accuracy DESC, created_at ASC
+        ORDER BY accuracy DESC, score DESC, created_at ASC
         LIMIT 10
         """
     ).fetchall()
@@ -251,6 +261,10 @@ def public_question(question):
         "question": question["question"],
         "options": question["options"],
     }
+
+
+def calculate_accuracy(score, total):
+    return (score * 100 + total // 2) // total
 
 
 @app.post("/api/quiz/start")
@@ -284,8 +298,12 @@ def start_quiz():
         (user["id"],),
     )
     conn.execute(
-        "INSERT INTO quiz_attempts (id, user_id, category, questions_json) VALUES (?, ?, ?, ?)",
-        (quiz_id, user["id"], category, json.dumps(questions)),
+        """
+        INSERT INTO quiz_attempts
+            (id, user_id, category, questions_json, question_started_at)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (quiz_id, user["id"], category, json.dumps(questions), time.time()),
     )
     conn.commit()
     conn.close()
@@ -336,6 +354,9 @@ def answer_quiz_question():
             conn.rollback()
             return jsonify({"error": "Answer is not one of the available options"}), 400
 
+        timed_out = time.time() - attempt["question_started_at"] > 20
+        if timed_out:
+            selected_answer = None
         is_correct = selected_answer == question["answer"]
         score = attempt["score"] + int(is_correct)
         streak = attempt["current_streak"] + 1 if is_correct else 0
@@ -353,7 +374,7 @@ def answer_quiz_question():
             """
             UPDATE quiz_attempts
             SET answers_json = ?, current_index = ?, score = ?, current_streak = ?,
-                best_streak = ?, status = ?
+                best_streak = ?, question_started_at = ?, status = ?
             WHERE id = ?
             """,
             (
@@ -362,6 +383,7 @@ def answer_quiz_question():
                 score,
                 streak,
                 best_streak,
+                time.time(),
                 "finished" if is_finished else "active",
                 quiz_id,
             ),
@@ -373,11 +395,12 @@ def answer_quiz_question():
             "score": score,
             "streak": streak,
             "answer": answers[-1],
+            "timed_out": timed_out,
             "finished": is_finished,
         }
         if is_finished:
             total = len(questions)
-            accuracy = round(score / total * 100)
+            accuracy = calculate_accuracy(score, total)
             conn.execute(
                 "INSERT INTO leaderboard (name, score, total, accuracy, category) VALUES (?, ?, ?, ?, ?)",
                 (user["name"], score, total, accuracy, attempt["category"]),

@@ -5,6 +5,7 @@ services:
     plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn server:app --bind 0.0.0.0:$PORT
+    healthCheckPath: /api/health
     disk:
       name: terra-trivia-data
       mountPath: /var/data
